@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<!-- saved from url=(0043)file:///C:/Users/xinxi/Downloads/index.html -->
+<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>UMRI 戰時醫療決策系統</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#1A3A5C;--bg:#F2F5F9;--white:#fff;--bd:#C8D4E0;
+  --text:#1A2A3A;--muted:#5A6B80;
+  --green:#007A47;--greenL:#E6F4ED;
+  --amber:#B86800;--amberL:#FDF3E3;
+  --red:#B02020;--redL:#FDEAEA;
+  --blue:#1A5FA8;--blueL:#E8F0FA;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,sans-serif;font-size:16px;line-height:1.6;min-height:100vh}
+
+/* topbar */
+.top{background:var(--navy);padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:99}
+.top-logo{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0}
+.top-name{font-size:14px;font-weight:700;color:#fff;line-height:1.3}
+.top-sub{font-size:11px;color:rgba(255,255,255,.55)}
+
+/* wizard */
+.page{display:none;padding:16px}
+.page.on{display:block}
+
+/* progress dots */
+.dots{display:flex;justify-content:center;gap:8px;padding:16px 0 20px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--bd);transition:background .3s}
+.dot.on{background:var(--navy)}
+.dot.done{background:var(--navy);opacity:.4}
+
+/* card */
+.card{background:var(--white);border-radius:12px;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.card-step{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;letter-spacing:.04em}
+.card-title{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px;line-height:1.3}
+.card-sub{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+
+/* option buttons */
+.opt{width:100%;background:var(--bg);border:2px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:10px;text-align:left;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all .15s;-webkit-appearance:none}
+.opt:active{transform:scale(.98)}
+.opt.sel{border-color:var(--navy);background:var(--blueL)}
+.opt-icon{font-size:24px;flex-shrink:0;width:36px;text-align:center}
+.opt-name{font-size:16px;font-weight:700;color:var(--text);margin-bottom:3px}
+.opt-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.opt-tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:4px;margin-top:6px;margin-right:4px}
+.tg{background:var(--greenL);color:var(--green)}
+.ta{background:var(--amberL);color:var(--amber)}
+.tr{background:var(--redL);color:var(--red)}
+.tb{background:var(--blueL);color:var(--blue)}
+
+/* number input */
+.ni-block{margin-bottom:14px}
+.ni-label{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;display:block}
+.ni-row{display:flex;align-items:center;gap:8px}
+.ni{flex:1;background:var(--white);border:2px solid var(--bd);border-radius:8px;padding:12px 14px;font-size:18px;font-weight:700;color:var(--navy);outline:none;-webkit-appearance:none}
+.ni:focus{border-color:var(--navy)}
+.ni-unit{font-size:14px;color:var(--muted);flex-shrink:0}
+
+/* nav */
+.nav{display:flex;gap:10px;margin-top:6px}
+.btn-back{flex:1;background:transparent;border:2px solid var(--bd);border-radius:10px;padding:14px;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer}
+.btn-next{flex:2;background:var(--navy);border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;color:#fff;cursor:pointer}
+.btn-next:disabled{background:var(--bd);cursor:not-allowed}
+.btn-start{width:100%;background:var(--navy);border:none;border-radius:10px;padding:16px;font-size:17px;font-weight:700;color:#fff;cursor:pointer;margin-top:8px}
+
+/* summary */
+.sum-item{background:var(--bg);border-radius:8px;padding:12px 14px;margin-bottom:8px;border-left:4px solid var(--navy)}
+.sum-key{font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:600}
+.sum-val{font-size:16px;font-weight:700;color:var(--navy)}
+
+/* alert */
+.alert{border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.6;margin-bottom:14px}
+.alert-r{background:var(--redL);border:1px solid rgba(176,32,32,.25);color:var(--red)}
+.alert-g{background:var(--greenL);border:1px solid rgba(0,122,71,.25);color:var(--green)}
+.alert-a{background:var(--amberL);border:1px solid rgba(184,104,0,.25);color:var(--amber)}
+
+/* ── DASHBOARD ── */
+#dash{display:none;padding:0 0 40px}
+#dash.on{display:block}
+
+.sbadge{background:var(--navy);padding:14px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.sb-item{text-align:center}
+.sb-lbl{font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.06em;display:block}
+.sb-val{font-size:15px;font-weight:700;color:#fff}
+.sb-val.cr{color:#FF8080}
+.sb-edit{font-size:12px;color:rgba(255,255,255,.5);text-decoration:underline;cursor:pointer;margin-left:auto}
+
+.dash-pad{padding:14px 16px}
+
+/* result strip - 2 col on mobile */
+.rs-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.rs-card{background:var(--white);border-radius:10px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,.07)}
+.rs-lbl{font-size:11px;color:var(--muted);margin-bottom:4px}
+.rs-val{font-size:24px;font-weight:700;line-height:1}
+.rs-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* resource cards */
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.res-card{background:var(--white);border-radius:8px;padding:12px 13px;border-top:3px solid}
+.res-lbl{font-size:11px;color:var(--muted);margin-bottom:3px}
+.res-val{font-size:18px;font-weight:700;line-height:1}
+
+.dcard{background:var(--white);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.07)}
+.dcard-t{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.dca{width:3px;height:11px;border-radius:2px;background:var(--navy);flex-shrink:0}
+
+/* option cards dashboard */
+.dopt{width:100%;background:var(--bg);border:2px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:8px;text-align:left;cursor:pointer;transition:all .15s}
+.dopt.on{border-color:var(--navy);background:var(--blueL)}
+.dopt-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px}
+.dopt-tag{font-size:11px;color:var(--muted);margin-bottom:6px}
+
+/* sliders */
+.sr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sr-l{font-size:13px;color:var(--muted);width:68px;flex-shrink:0}
+input[type=range]{-webkit-appearance:none;flex:1;height:5px;border-radius:3px;background:var(--bd);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--navy);cursor:pointer}
+.sr-v{font-size:14px;font-weight:700;color:var(--navy);width:36px;text-align:right;flex-shrink:0}
+
+/* impact bars */
+.ir{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ir-k{font-size:12px;color:var(--muted);width:76px;flex-shrink:0}
+.ir-t{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.ir-f{height:100%;border-radius:4px;transition:width .4s}
+.ir-n{font-size:13px;font-weight:700;width:44px;text-align:right;flex-shrink:0}
+
+/* nodes */
+.nr{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)}
+.nr:last-child{border:none}
+.nr-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.nr-info{flex:1}
+.nr-name{font-size:14px;font-weight:700;color:var(--text)}
+.nr-loc{font-size:12px;color:var(--muted)}
+.nr-right{text-align:right;flex-shrink:0}
+.nr-beds{font-size:13px;color:var(--muted)}
+.nst{font-size:11px;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:3px}
+.nsg{background:var(--greenL);color:var(--green)}.nsa{background:var(--amberL);color:var(--amber)}.nsr{background:var(--redL);color:var(--red)}.nsb{background:var(--blueL);color:var(--blue)}
+
+/* timeline */
+.tl{display:flex;gap:10px;margin-bottom:12px}
+.tl-t{font-size:11px;color:var(--muted);width:44px;flex-shrink:0;padding-top:1px}
+.tl-c{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.tl-d{width:10px;height:10px;border-radius:50%}
+.tl-l{width:1px;background:var(--bd);flex:1;min-height:14px;margin-top:3px}
+.tl-b{flex:1}
+.tl-n{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.tl-s{font-size:12px;color:var(--muted);line-height:1.45}
+
+/* district bars */
+.dr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.dr-n{font-size:13px;color:var(--text);width:44px;flex-shrink:0}
+.dr-t{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.dr-f{height:100%;border-radius:4px}
+.dr-v{font-size:13px;font-weight:700;width:26px;text-align:right}
+.dr-s{font-size:11px;padding:1px 6px;border-radius:3px;flex-shrink:0}
+
+/* decision bar */
+.dbar{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.dbar-s{font-size:13px;font-weight:700;color:var(--navy);flex:1}
+.btn-go{background:var(--red);border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:700;color:#fff;cursor:pointer}
+
+/* overlay */
+.ov{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end;justify-content:center}
+.ov.show{display:flex}
+.ov-box{background:var(--white);border-radius:16px 16px 0 0;padding:24px 20px 36px;width:100%;max-height:80vh;overflow-y:auto}
+.ov-title{font-size:18px;font-weight:700;margin-bottom:10px}
+.ov-body{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:20px}
+.ov-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-cancel{background:var(--bg);border:1.5px solid var(--bd);border-radius:8px;padding:13px;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer}
+.btn-confirm{background:var(--navy);border:none;border-radius:8px;padding:13px;font-size:15px;font-weight:700;color:#fff;cursor:pointer}
+
+/* SOP */
+.sop-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.stab{font-size:12px;padding:7px 12px;border-radius:6px;border:1.5px solid var(--bd);background:transparent;color:var(--muted);cursor:pointer}
+.stab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.sop-row{padding:10px 0;border-bottom:1px solid var(--bd)}
+.sop-row:last-child{border:none}
+.sop-time{font-size:12px;font-weight:700;color:var(--red);margin-bottom:2px}
+.sop-who{font-size:11px;color:var(--muted);margin-bottom:3px}
+.sop-act{font-size:13px;color:var(--text);line-height:1.5}
+
+/* policy */
+.pol{background:var(--white);border-radius:10px;padding:14px;margin-bottom:10px;border-top:3px solid}
+.pol-tag{font-size:11px;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:7px}
+.pol-tt{font-size:15px;font-weight:700;margin-bottom:5px}
+.pol-b{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.pol-f{font-size:11px;color:var(--muted);border-top:1px solid var(--bd);padding-top:7px;line-height:1.6}
+
+/* footer */
+.footer{background:var(--navy);padding:24px 16px;text-align:center}
+.footer-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+.footer-sub{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.06em;margin-bottom:2px}
+.footer-note{font-size:11px;color:rgba(255,255,255,.35);margin-top:12px;line-height:1.6}
+
+.cg{color:var(--green)}.ca{color:var(--amber)}.cr{color:var(--red)}.cb{color:var(--blue)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-logo">軍</div>
+  <div>
+    <div class="top-name">UMRI 戰時醫療決策系統</div>
+    <div class="top-sub">國防醫學大學 · 衛勤訓練中心</div>
+  </div>
+</div>
+
+<!-- ═══ WIZARD ═══ -->
+<div id="wiz">
+  <div class="dots" id="dots">
+    <div class="dot on" id="d0"></div>
+    <div class="dot" id="d1"></div>
+    <div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div>
+    <div class="dot" id="d4"></div>
+  </div>
+
+  <!-- Q1 行政區 -->
+  <div class="page on" id="q0">
+    <div class="card">
+      <div class="card-step">第 1 步 / 共 5 步</div>
+      <div class="card-title">選擇作戰場域</div>
+      <div class="card-sub">選擇要評估的臺北市行政區</div>
+
+      <button class="opt" onclick="pick0(this,&#39;中正區&#39;,160000,60000)"><span class="opt-icon">🏛</span><div><div class="opt-name">中正區</div><div class="opt-desc">人口 16萬 · 台北車站核心節點</div><span class="opt-tag tb">重度級醫院 2家</span></div></button>
+      <button class="opt" onclick="pick0(this,&#39;大安區&#39;,310000,95000)"><span class="opt-icon">🌳</span><div><div class="opt-name">大安區</div><div class="opt-desc">人口 31萬 · UMRI 最高</div><span class="opt-tag tg">UMRI 74 ★</span></div></button>
+      <button class="opt" onclick="pick0(this,&#39;信義區&#39;,225000,120000)"><span class="opt-icon">🏙</span><div><div class="opt-name">信義區</div><div class="opt-desc">人口 22.5萬 · 商業中心</div><span class="opt-tag tg">UMRI 71</span></div></button>
+      <button class="opt" onclick="pick0(this,&#39;松山區&#39;,200000,88000)"><span class="opt-icon">🏢</span><div><div class="opt-name">松山區</div><div class="opt-desc">人口 20萬 · 前期研究場域</div><span class="opt-tag ta">UMRI 65</span></div></button>
+      <button class="opt" onclick="pick0(this,&#39;北投區&#39;,265000,42000)"><span class="opt-icon">⚠️</span><div><div class="opt-name">北投區</div><div class="opt-desc">距海岸線 3km · 高暴露風險</div><span class="opt-tag tr">失能風險高</span></div></button>
+      <button class="opt" onclick="pick0(this,&#39;全市評估&#39;,2400000,800000)"><span class="opt-icon">🗺</span><div><div class="opt-name">全市評估</div><div class="opt-desc">12行政區整合 · 人口 240萬</div><span class="opt-tag tb">跨區整合</span></div></button>
+
+      <div class="ni-block" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
+        <label class="ni-label">日間流動人口</label>
+        <div class="ni-row"><input type="number" class="ni" id="flow-in" placeholder="例：80000" inputmode="numeric"><span class="ni-unit">人</span></div>
+      </div>
+      <input type="hidden" id="pop-in">
+    </div>
+    <button class="btn-next" id="n0" onclick="go(1)" disabled="" style="width:100%;padding:15px;font-size:16px;border-radius:10px">下一步 →</button>
+  </div>
+
+  <!-- Q2 攻擊情境 -->
+  <div class="page" id="q1">
+    <div class="card">
+      <div class="card-step">第 2 步 / 共 5 步</div>
+      <div class="card-title">設定攻擊情境</div>
+      <div class="card-sub">選擇最接近的情境，系統推算傷患規模</div>
+
+      <button class="opt" onclick="pick1(this,0.05,&#39;輕度衝突 — 局部空襲&#39;)"><span class="opt-icon">💥</span><div><div class="opt-name">輕度衝突</div><div class="opt-desc">局部空襲，醫療設施部分受損</div><span class="opt-tag tg">傷亡率 5%</span></div></button>
+      <button class="opt" onclick="pick1(this,0.15,&#39;中度衝突 — 多波段空襲&#39;)"><span class="opt-icon">🔥</span><div><div class="opt-name">中度衝突</div><div class="opt-desc">多波段空襲，數家醫院失能</div><span class="opt-tag ta">傷亡率 15%</span></div></button>
+      <button class="opt" onclick="pick1(this,0.30,&#39;重度衝突 — 全面城鎮戰&#39;)"><span class="opt-icon">⚔️</span><div><div class="opt-name">重度衝突</div><div class="opt-desc">全面城鎮戰，主要醫院失能</div><span class="opt-tag tr">傷亡率 30%</span></div></button>
+      <button class="opt" onclick="pick1(this,0.45,&#39;極重度 — 登陸作戰&#39;)"><span class="opt-icon">🚨</span><div><div class="opt-name">極重度</div><div class="opt-desc">登陸作戰複合打擊，系統壓力測試</div><span class="opt-tag tr">傷亡率 45%</span></div></button>
+    </div>
+    <div class="nav"><button class="btn-back" onclick="go(0)">← 上一步</button><button class="btn-next" id="n1" onclick="go(2)" disabled="">下一步 →</button></div>
+  </div>
+
+  <!-- Q3 時間 -->
+  <div class="page" id="q2">
+    <div class="card">
+      <div class="card-step">第 3 步 / 共 5 步</div>
+      <div class="card-title">持續作業時間</div>
+      <div class="card-sub">地下醫療站需自主維運多長時間？</div>
+
+      <button class="opt" onclick="pick2(this,24)"><span class="opt-icon">⏱</span><div><div class="opt-name">24 小時</div><div class="opt-desc">短期應急，等待後援</div><span class="opt-tag tg">物資需求最低</span></div></button>
+      <button class="opt" onclick="pick2(this,48)"><span class="opt-icon">🕐</span><div><div class="opt-name">48 小時</div><div class="opt-desc">中期維運，多輪輪替</div><span class="opt-tag ta">標準戰時設定</span></div></button>
+      <button class="opt" onclick="pick2(this,72)"><span class="opt-icon">🔒</span><div><div class="opt-name">72 小時</div><div class="opt-desc">封鎖情境壓力測試</div><span class="opt-tag tr">最嚴苛設定</span></div></button>
+    </div>
+    <div class="nav"><button class="btn-back" onclick="go(1)">← 上一步</button><button class="btn-next" id="n2" onclick="go(3)" disabled="">下一步 →</button></div>
+  </div>
+
+  <!-- Q4 資源 -->
+  <div class="page" id="q3">
+    <div class="card">
+      <div class="card-step">第 4 步 / 共 5 步</div>
+      <div class="card-title">現有醫療資源</div>
+      <div class="card-sub">填入目前可動員的資源，系統計算缺口</div>
+
+      <div class="ni-block"><label class="ni-label">現有可用床位</label><div class="ni-row"><input type="number" class="ni" id="cur-b" value="800" inputmode="numeric"><span class="ni-unit">床</span></div></div>
+      <div class="ni-block"><label class="ni-label">可動員醫師</label><div class="ni-row"><input type="number" class="ni" id="cur-d" value="120" inputmode="numeric"><span class="ni-unit">人</span></div></div>
+      <div class="ni-block"><label class="ni-label">可動員護理</label><div class="ni-row"><input type="number" class="ni" id="cur-n" value="350" inputmode="numeric"><span class="ni-unit">人</span></div></div>
+      <div class="ni-block"><label class="ni-label">血液製品庫存</label><div class="ni-row"><input type="number" class="ni" id="cur-bl" value="500" inputmode="numeric"><span class="ni-unit">袋</span></div></div>
+    </div>
+    <div class="nav"><button class="btn-back" onclick="go(2)">← 上一步</button><button class="btn-next" onclick="go(4)">下一步 →</button></div>
+  </div>
+
+  <!-- Q5 確認 -->
+  <div class="page" id="q4">
+    <div class="card">
+      <div class="card-step">第 5 步 / 共 5 步</div>
+      <div class="card-title">確認設定</div>
+      <div class="card-sub">確認後啟動決策試算</div>
+      <div id="sum"></div>
+      <div id="sum-w" class="alert alert-a" style="display:none;margin-top:10px"></div>
+    </div>
+    <button class="btn-start" onclick="launch()">啟動決策試算 →</button>
+    <div class="nav" style="margin-top:10px"><button class="btn-back" onclick="go(3)">← 修改設定</button><div></div></div>
+  </div>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="dash">
+  <div class="sbadge">
+    <div class="sb-item"><span class="sb-lbl">場域</span><span class="sb-val" id="sb-a">—</span></div>
+    <div class="sb-item"><span class="sb-lbl">情境</span><span class="sb-val" id="sb-s">—</span></div>
+    <div class="sb-item"><span class="sb-lbl">總傷患</span><span class="sb-val cr" id="sb-c">—</span></div>
+    <div class="sb-item"><span class="sb-lbl">床位缺口</span><span class="sb-val cr" id="sb-g">—</span></div>
+    <span class="sb-edit" onclick="resetWiz()">⟵ 重設</span>
+  </div>
+
+  <div class="dash-pad">
+    <div class="alert alert-r" id="d-alert" style="margin-top:4px"><strong>複合跨區壓力觸發</strong> — 北投、士林、大同 3 區醫院失能。補給 72hr 無法恢復。<strong>系統預計 47 小時後崩潰。</strong></div>
+
+    <div class="rs-grid">
+      <div class="rs-card"><div class="rs-lbl">總傷患</div><div class="rs-val cr" id="d-tot">—</div><div class="rs-sub">人</div></div>
+      <div class="rs-card"><div class="rs-lbl">紅標重症</div><div class="rs-val cr" id="d-red">—</div><div class="rs-sub">人</div></div>
+      <div class="rs-card"><div class="rs-lbl">所需床位</div><div class="rs-val cb" id="d-bed">—</div><div class="rs-sub">床</div></div>
+      <div class="rs-card"><div class="rs-lbl">床位缺口</div><div class="rs-val cr" id="d-gap">—</div><div class="rs-sub">需地下節點補足</div></div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-t"><span class="dca"></span>整備需求明細</div>
+      <div class="res-grid" id="res-d"></div>
+      <div id="res-w" style="display:none;margin-top:10px" class="alert alert-r"></div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-t"><span class="dca" style="background:var(--green)"></span>選擇部署方案</div>
+      <button class="dopt on" id="op0" onclick="pickOpt(0)"><div class="dopt-name">方案 A — 集中優先部署</div><div class="dopt-tag">像拳頭出力，快速救重症</div><span class="opt-tag tg">啟動最快 18min</span><span class="opt-tag ta">周邊區前12hr空白</span></button>
+      <button class="dopt" id="op1" onclick="pickOpt(1)"><div class="dopt-name">方案 B — 分散均衡部署</div><div class="dopt-tag">像雨傘展開，全市覆蓋</div><span class="opt-tag tb">覆蓋率 81%</span><span class="opt-tag tr">壅塞率偏高</span></button>
+      <button class="dopt" id="op2" onclick="pickOpt(2)"><div class="dopt-name">方案 C — 軍民分流部署</div><div class="dopt-tag">軍用捷運線、民用停車場雙軌</div><span class="opt-tag tg">壅塞最低 24%</span><span class="opt-tag tr">需跨機構協調</span></button>
+
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px">資源配比調整</div>
+        <div class="sr"><span class="sr-l">醫護人力</span><input type="range" min="20" max="100" value="60" id="rP" oninput="updRes()"><span class="sr-v" id="vP">60%</span></div>
+        <div class="sr"><span class="sr-l">救護車輛</span><input type="range" min="10" max="100" value="45" id="rV" oninput="updRes()"><span class="sr-v" id="vV">45%</span></div>
+        <div class="sr"><span class="sr-l">醫療物資</span><input type="range" min="10" max="100" value="55" id="rS" oninput="updRes()"><span class="sr-v" id="vS">55%</span></div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 8px">方案預測影響</div>
+        <div id="imp"></div>
+      </div>
+
+      <div class="dbar">
+        <div class="dbar-s" id="selT">方案 A — 集中優先部署</div>
+        <button class="btn-go" onclick="openOv()">下令啟動</button>
+      </div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-t"><span class="dca"></span>優先啟用節點</div>
+      <div id="nlist"></div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-t"><span class="dca" style="background:var(--amber)"></span>行動時序</div>
+      <div id="tline"></div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-t"><span class="dca" style="background:var(--amber)"></span>核心取捨</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="background:var(--bg);border-radius:8px;padding:12px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">方案A 前6小時重症救治率</div>
+          <div style="font-size:28px;font-weight:700;color:var(--green)">+23%</div>
+          <div style="font-size:12px;color:var(--muted)">重症存活率高出 23%</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">方案B 減少跨區後送</div>
+          <div style="font-size:28px;font-weight:700;color:var(--blue)">-41%</div>
+          <div style="font-size:12px;color:var(--muted)">後送距離顯著下降</div>
+        </div>
+      </div>
+      <div class="alert alert-g">重症集中市中心且後送路線仍可用 → 選 <strong>A</strong>。傷患分散全市且後送全面中斷 → 選 <strong>B</strong>。</div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-t"><span class="dca" style="background:var(--muted)"></span>各行政區 UMRI 指數</div>
+      <div id="dbars"></div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-t"><span class="dca" style="background:var(--amber)"></span>平戰轉換 SOP</div>
+      <div class="sop-tabs">
+        <button class="stab on" onclick="showSop(this,0)">T+0~30min</button>
+        <button class="stab" onclick="showSop(this,1)">T+30m~3hr</button>
+        <button class="stab" onclick="showSop(this,2)">T+3~12hr</button>
+        <button class="stab" onclick="showSop(this,3)">T+12~72hr</button>
+      </div>
+      <div id="sop-c"></div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-t"><span class="dca" style="background:var(--amber)"></span>政策依據</div>
+      <div class="pol" style="border-top-color:var(--amber)"><span class="pol-tag ta">LAW 01</span><div class="pol-tt">全民防衛動員準備法</div><div class="pol-b">第八大方案明定衛生醫療體系平戰轉換，各醫療院所須完成備援配置計畫。</div><div class="pol-f">主管：衛生福利部 · 修正：112年</div></div>
+      <div class="pol" style="border-top-color:var(--green)"><span class="pol-tag tg">POLICY 02</span><div class="pol-tt">全社會防衛韌性委員會</div><div class="pol-b">八大方案第五項：擴充急救醫療場域與強化大量傷患處置能力為核心任務。</div><div class="pol-f">主席：總統 · 設立：113/12/26</div></div>
+      <div class="pol" style="border-top-color:var(--blue)"><span class="pol-tag tb">PROGRAM 03</span><div class="pol-tt">衛福部韌性醫療計畫</div><div class="pol-b">2025年啟動：新設醫院建置地下醫院、現有醫院強化地下停車場結構。</div><div class="pol-f">主管：衛生福利部長邱泰源 · 啟動：114/01/02</div></div>
+      <div class="alert alert-r" style="margin-top:10px"><strong>政策缺口：</strong>三項政策均指向地下空間醫療轉型，但全市跨區模擬模型與 UMRI 指數目前付之闕如。本研究即為填補此缺口。</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-name">國防醫學大學</div>
+    <div class="footer-sub">NATIONAL DEFENSE MEDICAL CENTER</div>
+    <div class="footer-name" style="margin-top:8px">衛勤訓練中心</div>
+    <div class="footer-sub">MEDICAL SUPPORT TRAINING CENTER · MSTC · NDMC</div>
+    <div style="margin-top:10px;font-size:14px;font-weight:700;color:#00D97E">UMRI 都市戰時醫療韌性指數</div>
+    <div class="footer-sub">都市醫療韌性研究計畫　116–117年度</div>
+    <div class="footer-note">數值為 ARENA® DES 模擬推估，基於臺北市政府開放資料。<br>本系統為研究展示原型，非即時作業系統。</div>
+  </div>
+</div>
+
+<!-- CONFIRM OVERLAY -->
+<div class="ov" id="ov">
+  <div class="ov-box">
+    <div class="ov-title" id="ov-t">確認下令啟動</div>
+    <div class="ov-body" id="ov-b"></div>
+    <div class="ov-btns">
+      <button class="btn-cancel" onclick="closeOv()">取消</button>
+      <button class="btn-confirm" onclick="doEx()">確認下令</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const S={area:'',pop:0,flow:0,sc:0,scL:'',dur:0};
+let selO=0,fired=false;
+
+function go(s){
+  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('on',i===s));
+  [0,1,2,3,4].forEach(i=>{
+    const d=document.getElementById('d'+i);
+    d.classList.toggle('on',i===s);
+    d.classList.toggle('done',i<s);
+  });
+  if(s===4)buildSum();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function pick0(b,a,p,f){
+  document.querySelectorAll('#q0 .opt').forEach(x=>x.classList.remove('sel'));
+  b.classList.add('sel');
+  S.area=a;S.pop=p;S.flow=f;
+  document.getElementById('flow-in').value=f;
+  document.getElementById('pop-in').value=p;
+  document.getElementById('n0').disabled=false;
+}
+function pick1(b,sc,l){
+  document.querySelectorAll('#q1 .opt').forEach(x=>x.classList.remove('sel'));
+  b.classList.add('sel');S.sc=sc;S.scL=l;
+  document.getElementById('n1').disabled=false;
+}
+function pick2(b,d){
+  document.querySelectorAll('#q2 .opt').forEach(x=>x.classList.remove('sel'));
+  b.classList.add('sel');S.dur=d;
+  document.getElementById('n2').disabled=false;
+}
+
+function buildSum(){
+  S.pop=parseInt(document.getElementById('pop-in').value)||S.pop;
+  S.flow=parseInt(document.getElementById('flow-in').value)||S.flow;
+  const tot=Math.round((S.pop+S.flow)*S.sc);
+  const beds=Math.round(tot*0.2+tot*0.3*0.8+tot*0.5*0.3);
+  const gap=Math.max(0,beds-(parseInt(document.getElementById('cur-b').value)||0));
+  document.getElementById('sum').innerHTML=[
+    {k:'場域',v:S.area||'—'},{k:'情境',v:S.scL?S.scL.split('—')[0].trim():'—'},
+    {k:'持續時間',v:S.dur?S.dur+' 小時':'—'},{k:'總傷患推估',v:tot.toLocaleString()+' 人'},
+    {k:'所需床位',v:beds.toLocaleString()+' 床'},{k:'床位缺口',v:gap.toLocaleString()+' 床'},
+  ].map(r=>`<div class="sum-item"><div class="sum-key">${r.k}</div><div class="sum-val">${r.v}</div></div>`).join('');
+  const w=document.getElementById('sum-w');
+  if(gap>0){w.style.display='block';w.innerHTML='⚠ 缺口 '+gap.toLocaleString()+' 床，地下空間備援部署為必要措施。';}
+  else w.style.display='none';
+}
+
+function launch(){
+  document.getElementById('wiz').style.display='none';
+  document.getElementById('dash').classList.add('on');
+  initDash();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function resetWiz(){
+  document.getElementById('wiz').style.display='block';
+  document.getElementById('dash').classList.remove('on');
+  go(0);
+}
+
+const OPTS=[
+  {name:'方案 A — 集中優先部署',imp:[{k:'收治涵蓋率',b:74,c:'#007A47',m:100},{k:'後送完成率',b:61,c:'#1A5FA8',m:100},{k:'系統壅塞',b:38,c:'#B86800',m:100},{k:'啟動延遲',b:18,c:'#6B5EA8',m:60,u:'min',fx:true},{k:'可延續時間',b:52,c:'#0E7490',m:100,u:'hr'}],
+   nodes:[{n:'台北車站地下層',l:'中正區',bd:420,d:'#007A47',s:'nsg',t:'待命'},{n:'南港展覽館 B3',l:'南港區',bd:350,d:'#007A47',s:'nsg',t:'待命'},{n:'大安森林公園地下',l:'大安區',bd:320,d:'#007A47',s:'nsg',t:'待命'},{n:'信義威秀地下',l:'信義區',bd:280,d:'#B86800',s:'nsa',t:'準備中'}],
+   tl:[{t:'T+00',n:'方案下令',s:'通報各節點、啟動人員動員',d:'#5A6B80'},{t:'T+18m',n:'首批節點啟用',s:'台北車站、南港展覽館開始收治',d:'#007A47'},{t:'T+45m',n:'全部節點就位',s:'4 個優先節點完全啟動',d:'#1A5FA8'},{t:'T+02h',n:'系統穩定',s:'分流流程確立，壅塞降至 38%',d:'#1A5FA8'},{t:'T+06h',n:'第一次評估',s:'量能使用率、人員狀況回報指揮部',d:'#6B5EA8'}]},
+  {name:'方案 B — 分散均衡部署',imp:[{k:'收治涵蓋率',b:81,c:'#007A47',m:100},{k:'後送完成率',b:55,c:'#1A5FA8',m:100},{k:'系統壅塞',b:52,c:'#B86800',m:100},{k:'啟動延遲',b:42,c:'#6B5EA8',m:60,u:'min',fx:true},{k:'可延續時間',b:38,c:'#0E7490',m:100,u:'hr'}],
+   nodes:[{n:'天母廣場地下',l:'士林區',bd:160,d:'#007A47',s:'nsg',t:'待命'},{n:'文山區公所地下',l:'文山區',bd:120,d:'#007A47',s:'nsg',t:'待命'},{n:'中山北路市立',l:'中山區',bd:195,d:'#B86800',s:'nsa',t:'準備中'},{n:'北投公園地下',l:'北投區',bd:135,d:'#B02020',s:'nsr',t:'待確認'}],
+   tl:[{t:'T+00',n:'方案下令',s:'同時通報全市 12 區節點負責人',d:'#5A6B80'},{t:'T+42m',n:'各區首批啟用',s:'約 8 個節點陸續開始收治',d:'#B86800'},{t:'T+90m',n:'全域節點就位',s:'12 區覆蓋建立，但資源分散',d:'#B86800'},{t:'T+03h',n:'系統評估',s:'壅塞較高，建議調整物資配比',d:'#B02020'},{t:'T+06h',n:'整體回報',s:'全市量能、分流效率確認',d:'#6B5EA8'}]},
+  {name:'方案 C — 軍民分流部署',imp:[{k:'收治涵蓋率',b:68,c:'#007A47',m:100},{k:'後送完成率',b:72,c:'#1A5FA8',m:100},{k:'系統壅塞',b:24,c:'#007A47',m:100},{k:'啟動延遲',b:35,c:'#6B5EA8',m:60,u:'min',fx:true},{k:'可延續時間',b:67,c:'#0E7490',m:100,u:'hr'}],
+   nodes:[{n:'南京復興站體',l:'松山區（軍）',bd:180,d:'#1A5FA8',s:'nsb',t:'軍事動線'},{n:'台北車站地下層',l:'中正區（軍）',bd:420,d:'#1A5FA8',s:'nsb',t:'軍事動線'},{n:'大安森林公園地下',l:'大安區（民）',bd:320,d:'#007A47',s:'nsg',t:'民間動線'},{n:'信義威秀地下',l:'信義區（民）',bd:280,d:'#007A47',s:'nsg',t:'民間動線'}],
+   tl:[{t:'T+00',n:'方案下令',s:'軍醫與民間醫療同步啟動',d:'#1A5FA8'},{t:'T+35m',n:'雙軌啟用',s:'軍事（捷運）與民間（停車場）同步',d:'#007A47'},{t:'T+60m',n:'分流確認',s:'確認無交叉壅塞',d:'#007A47'},{t:'T+02h',n:'跨機構協調',s:'確認軍民介面銜接順暢',d:'#B86800'},{t:'T+06h',n:'聯合評估',s:'軍醫處與衛生局共同回報',d:'#6B5EA8'}]},
+];
+const DIS=[{n:'大安',u:74,ok:true},{n:'信義',u:71,ok:true},{n:'中山',u:68,ok:true},{n:'松山',u:65,ok:true},{n:'中正',u:62,ok:true},{n:'文山',u:60,ok:true},{n:'士林',u:57,ok:false},{n:'南港',u:55,ok:true},{n:'內湖',u:53,ok:true},{n:'北投',u:50,ok:false},{n:'萬華',u:48,ok:true},{n:'大同',u:44,ok:false}];
+const SOP=[
+  {ph:'第一階段 T+0~30min 緊急啟動',c:'#B02020',rows:[{t:'T+00:00',o:'指揮官',a:'下達啟動令，通報地下醫療節點負責人'},{t:'T+00:08',o:'各節點長',a:'啟動地下空間清場，設置安全動線'},{t:'T+00:15',o:'檢傷官',a:'設置檢傷站，掛牌標示紅/黃/綠分流區'},{t:'T+00:18',o:'節點A',a:'台北車站地下層、南港展覽館首批開始收治'},{t:'T+00:30',o:'指揮官',a:'第一次狀況回報，確認各節點啟用狀態'}]},
+  {ph:'第二階段 T+30min~3hr 全面展開',c:'#B86800',rows:[{t:'T+00:45',o:'所有節點',a:'全部優先節點就位，收治全面展開'},{t:'T+01:30',o:'分流官',a:'依各節點壅塞率動態調整傷患分流方向'},{t:'T+02:00',o:'指揮官',a:'第二次回報，決定是否啟用次優先節點'},{t:'T+03:00',o:'指揮官',a:'第一次完整評估'}]},
+  {ph:'第三階段 T+3~12hr 穩定維運',c:'#1A5FA8',rows:[{t:'T+03:00',o:'人力官',a:'啟動人員輪替計畫（連續作業上限 6hr）'},{t:'T+06:00',o:'指揮官',a:'第三次回報，決策是否調整資源配比'},{t:'T+12:00',o:'指揮官',a:'12小時總評估，提交階段性作戰報告'}]},
+  {ph:'第四階段 T+12~72hr 持續韌性',c:'#007A47',rows:[{t:'T+24:00',o:'指揮官',a:'24小時評估，計算 UMRI 指數'},{t:'T+48:00',o:'指揮官',a:'48小時評估，決定是否向其他縣市請援'},{t:'T+72:00',o:'指揮官',a:'72小時總結，評估是否解除緊急狀態'}]},
+];
+
+function initDash(){
+  const tot=Math.round((S.pop+S.flow)*S.sc);
+  const red=Math.round(tot*.2),yel=Math.round(tot*.3),grn=Math.round(tot*.5);
+  const beds=Math.round(red+yel*.8+grn*.3),icu=Math.round(red*.15);
+  const cB=parseInt(document.getElementById('cur-b').value)||0;
+  const gap=Math.max(0,beds-cB);
+  const dur=S.dur||24,df=dur/24;
+  const docs=Math.round(red/8+yel/12+grn/20),nurs=Math.round(red/4+yel/8+grn/15);
+  const blood=Math.round(red*2.5*df),iv=Math.round((red+yel)*3*df),dress=Math.round(tot*1.5*df);
+
+  document.getElementById('sb-a').textContent=S.area||'全市';
+  document.getElementById('sb-s').textContent=S.scL?S.scL.split('—')[0].trim():'—';
+  document.getElementById('sb-c').textContent=tot.toLocaleString()+'人';
+  document.getElementById('sb-g').textContent=gap.toLocaleString()+'床';
+  document.getElementById('d-tot').textContent=tot.toLocaleString();
+  document.getElementById('d-red').textContent=red.toLocaleString();
+  document.getElementById('d-bed').textContent=beds.toLocaleString();
+  document.getElementById('d-gap').textContent=gap.toLocaleString();
+
+  const rl=[{l:'床位需求(含ICU '+icu+'床)',v:beds.toLocaleString(),u:'床',c:'#1A5FA8'},{l:'醫師人力',v:docs.toLocaleString(),u:'人',c:'#007A47'},{l:'護理人力',v:nurs.toLocaleString(),u:'人',c:'#007A47'},{l:'血液製品('+dur+'hr)',v:blood.toLocaleString(),u:'袋',c:'#B02020'},{l:'靜脈輸液('+dur+'hr)',v:iv.toLocaleString(),u:'袋',c:'#B86800'},{l:'敷料包('+dur+'hr)',v:dress.toLocaleString(),u:'份',c:'#0E7490'},{l:'床位缺口',v:gap.toLocaleString(),u:'床',c:gap>0?'#B02020':'#007A47'},{l:'現有床位',v:cB.toLocaleString(),u:'床',c:'#5A6B80'}];
+  document.getElementById('res-d').innerHTML=rl.map(r=>`<div class="res-card" style="border-top-color:${r.c}"><div class="res-lbl">${r.l}</div><div class="res-val" style="color:${r.c}">${r.v}<span style="font-size:12px;font-weight:400;margin-left:2px">${r.u}</span></div></div>`).join('');
+  if(gap>2000){const w=document.getElementById('res-w');w.style.display='block';w.innerHTML='⚠ 缺口 <strong>'+gap.toLocaleString()+' 床</strong>，地下空間備援為必要措施。';}
+
+  document.getElementById('dbars').innerHTML=DIS.map(d=>{const c=d.u>=65?'#007A47':d.u>=52?'#B86800':'#B02020';const sc=d.ok?(d.u>=65?'nsg':'nsa'):'nsr';const st=d.ok?(d.u>=65?'可用':'警示'):'失能';return`<div class="dr"><span class="dr-n">${d.n}</span><div class="dr-t"><div class="dr-f" style="width:${d.u}%;background:${c}"></div></div><span class="dr-v" style="color:${c}">${d.u}</span><span class="dr-s ${sc}">${st}</span></div>`;}).join('');
+
+  pickOpt(0);
+  showSop(document.querySelector('.stab'),0);
+
+  let pv=847;
+  setInterval(()=>{if(!fired){pv+=Math.floor(Math.random()*3+1);}},2800);
+}
+
+function pickOpt(i){
+  selO=i;
+  [0,1,2].forEach(j=>document.getElementById('op'+j).classList.toggle('on',j===i));
+  document.getElementById('selT').textContent=OPTS[i].name;
+  renderImp();renderNodes();renderTL();
+}
+function getBoost(){const p=parseInt(document.getElementById('rP').value),v=parseInt(document.getElementById('rV').value),s=parseInt(document.getElementById('rS').value);return Math.round((p+v+s)/3/100*10);}
+function updRes(){['P','V','S'].forEach(k=>{document.getElementById('v'+k).textContent=parseInt(document.getElementById('r'+k).value)+'%';});renderImp();}
+function renderImp(){const boost=getBoost();document.getElementById('imp').innerHTML=OPTS[selO].imp.map(x=>{const r=x.fx?x.b:Math.min(x.m,x.b+boost),p=Math.round(r/x.m*100),d=x.u?r+'\u00a0'+x.u:r+'%';return`<div class="ir"><span class="ir-k">${x.k}</span><div class="ir-t"><div class="ir-f" style="width:${p}%;background:${x.c}"></div></div><span class="ir-n" style="color:${x.c}">${d}</span></div>`;}).join('');}
+function renderNodes(){document.getElementById('nlist').innerHTML=OPTS[selO].nodes.map(n=>`<div class="nr"><div class="nr-dot" style="background:${n.d}"></div><div class="nr-info"><div class="nr-name">${n.n}</div><div class="nr-loc">${n.l}</div></div><div class="nr-right"><div class="nr-beds">${n.bd} 床</div><span class="nst ${n.s}">${n.t}</span></div></div>`).join('');}
+function renderTL(){const tl=OPTS[selO].tl;document.getElementById('tline').innerHTML=tl.map((t,i)=>`<div class="tl"><span class="tl-t">${t.t}</span><div class="tl-c"><div class="tl-d" style="background:${t.d}"></div>${i<tl.length-1?'<div class="tl-l"></div>':''}</div><div class="tl-b"><div class="tl-n">${t.n}</div><div class="tl-s">${t.s}</div></div></div>`).join('');}
+function openOv(){const p=document.getElementById('rP').value,v=document.getElementById('rV').value,s=document.getElementById('rS').value;document.getElementById('ov-t').textContent='確認下令啟動 '+OPTS[selO].name;document.getElementById('ov-b').innerHTML='即將啟動 <strong>'+OPTS[selO].name+'</strong><br>醫護 <strong>'+p+'%</strong>・車輛 <strong>'+v+'%</strong>・物資 <strong>'+s+'%</strong><br><br><strong>確認後無法撤回。</strong>';document.getElementById('ov').classList.add('show');}
+function closeOv(){document.getElementById('ov').classList.remove('show');}
+function doEx(){closeOv();fired=true;const a=document.getElementById('d-alert');a.className='alert alert-g';a.innerHTML='<strong>指令已下達 — '+OPTS[selO].name+' 啟動中</strong><br>各節點負責人已收到通報，資源調配執行中。';}
+function showSop(el,i){document.querySelectorAll('.stab').forEach(b=>b.classList.remove('on'));el.classList.add('on');const d=SOP[i];document.getElementById('sop-c').innerHTML=d.rows.map(r=>`<div class="sop-row"><div class="sop-time">${r.t}</div><div class="sop-who">${r.o}</div><div class="sop-act">${r.a}</div></div>`).join('');}
+</script>
+
+
+</body></html>
